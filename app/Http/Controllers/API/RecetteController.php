@@ -14,6 +14,7 @@ class RecetteController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
     public function index(Request $request)
     {
         $mieu_vote = Recette::max('vote')->get(3);
@@ -73,9 +74,20 @@ class RecetteController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+
     public function store(Request $request)
     {
-        //
+      $request->validate([
+          'nom' => 'required',
+          'description' => 'required',
+      ]);
+
+      $lien = Str::slug($nom,'-');
+
+       Recette::create([
+          'nom' => $request->input('nom'),
+          'description' => $request->input('description'),
+       ]);
     }
 
     /**
