@@ -10,7 +10,7 @@ class Recette extends Model
     protected $fillable = [
             'nom',
             'description',
-            
+            'users_admin',
     ];
 
     use HasFactory;

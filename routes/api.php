@@ -2,7 +2,9 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\API\AbonneController;
 use App\Http\Controllers\API\RecetteController;
+use App\Http\Controllers\API\RegisterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,17 +17,14 @@ use App\Http\Controllers\API\RecetteController;
 |
 */
 
-Route::apiResource("recette", RecetteController::class);
-Route::get('dashbord/create',[RecetteController::class,'create'])->name('recette.create');
-Route::get('dashbord/statistique',[RecetteController::class,'create'])->name('recette.dashboard');
+Route::post('register', [RegisterController::class, 'register']);
 
+Route::post('login', [RegisterController::class, 'login']);
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth'])->name('dashboard');
+Route::apiResource('recettes', RecetteController::class);
 
-require __DIR__.'/auth.php';
+Route::middleware('auth:sanctum')->group( function () {
 
-// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-//     return $request->user();
-// });
+    Route::apiResource('abonnes', AbonneController::class);
+
+});

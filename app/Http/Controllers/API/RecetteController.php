@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
 use App\Models\Recette;
 use App\Models\Categorie;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
-class RecetteController extends Controller
+use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\API\BaseController;
+use App\Http\Resources\Recettes as RecetteResource;
+
+class RecetteController extends BaseController
 {
     /**
      * Display a listing of the resource.
@@ -15,57 +19,27 @@ class RecetteController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    public function index(Request $request)
+     public function __contruct()
+     {
+          $this->middleware('auth:sanctum');
+     }
+    public function index()
+
     {
-        $mieu_vote = Recette::max('vote')->get(3);
-        $recettes = Recette::paginate(3);
-        $categories = Categorie::all();
-        
-        if($request->search){
+        $recettes = Recette::all();
 
-            $recettes=Recette::where('nom','like','%'.$request->search.'%')
-            ->orWhere('description','like','%'.$request->search.'%')
-            ->where('publie','==',1)
-            ->paginate(3)
-            ->withQueryString();
+        if(!is_null($recettes)){
+          
+          return $this->sendResponse(
 
-        }elseif ($request->categorie) {
+            $recettes,
 
-            $recettes=Categorie::where('nom',$request->categorie)
-            ->firstOrFail()->recettes()
-            ->paginate(3)
-            ->withQueryString();
-            
+            'success'
+          );
+
         }
-        if ($request->ajax() ) {
-
-            $view = view('layout.Recettes.data', compact('Recettes'))->render();
-            return $view;
         
-    }
-    
-      if (
-        $recettes->count() > 0 &&
-        $categories->count() > 0 && 
-        $mieu_vote->count() >0
-      ) {
-        return response()->json([
-             'status'     => 200, //tous c'est bien passées
-             'recettes'   => $recettes,
-             'abonnes'    => $abonnes,
-             'mieu_vote'  => $mieu_vote
-        ]);
-      }
-      if (
-        $recettes->count() == 0 &&
-        $categories->count() == 0 && 
-        $mieu_vote->count() ==0
-      ) {
-        return response()->json([
-             'status'     => 404, //aucun enregistrement pour le moment
-             'message'   => "Aucun enregistrement"
-        ]);
-      }
+        return $this->senErrors('Fail to fetch data');
     }
 
     /**
@@ -77,17 +51,41 @@ class RecetteController extends Controller
 
     public function store(Request $request)
     {
-      $request->validate([
-          'nom' => 'required',
-          'description' => 'required',
-      ]);
+
+      $input = $request->all();
+
+      $validator = Validator::make($input,[
+
+               'nom'  => 'required',
+
+               'desciption' => 'required'
+              ],
+      );
+
+      if ($validator->fails()) {
+
+        return $this->sendError('Validation Error.', $validator->errors());
+
+      }
 
       $lien = Str::slug($nom,'-');
 
-       Recette::create([
+       $recette = Recette::create([
+
           'nom' => $request->input('nom'),
+
           'description' => $request->input('description'),
+          'lien'  => $lien,
        ]);
+
+       return $this->sendResponse(
+
+        new RecetteResource($recette), 
+
+        'Recipe created successfully.'
+
+      );
+
     }
 
     /**
@@ -96,9 +94,24 @@ class RecetteController extends Controller
      * @param  \App\Models\Recette  $recette
      * @return \Illuminate\Http\Response
      */
-    public function show(Recette $recette)
+    public function show($lien)
     {
-        //
+        $recette = Recette::where('lien',$lien)->firstOrFail();
+
+        if (!is_null($recette)) 
+        {
+
+          return $this->sendResponse(
+
+            new RecetteResource($recette), 
+
+            'success'
+
+          );
+
+        }
+
+        return $this->sendError('Recipe not found.');
     }
 
     /**
@@ -110,7 +123,37 @@ class RecetteController extends Controller
      */
     public function update(Request $request, Recette $recette)
     {
-        //
+
+      $input = $request->all();
+
+      $validator = Validator::make($input,[
+
+               'nom'  => 'required',
+
+               'desciption' => 'required'
+              ],
+      );
+
+      if ($validator->fails()) {
+
+        return $this->sendError('Validation Error.', $validator->errors());
+
+      }
+
+      $lien = Str::slug($nom,'-');
+
+      $recette->nom = $input['nom'];
+
+      $recette->description = $input['description'];
+
+      $recette->lien = $lien;
+      $recette->save();
+
+      return $this->sendResponse(
+        new RecetteResource($recette), 
+        'Recipe updated successfully.'
+      );
+
     }
 
     /**
@@ -121,6 +164,9 @@ class RecetteController extends Controller
      */
     public function destroy(Recette $recette)
     {
-        //
+        $recette->delete();
+
+        return $this->sendResponse([], 'Recipe deleted successfully.');
+
     }
 }

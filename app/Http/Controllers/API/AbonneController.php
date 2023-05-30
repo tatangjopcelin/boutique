@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
 use App\Models\Abonne;
 use Illuminate\Http\Request;
 
-class AbonneController extends Controller
+use App\Http\Controllers\API\BaseController;
+
+class AbonneController extends BaseController
 {
     /**
      * Display a listing of the resource.
@@ -17,18 +18,21 @@ class AbonneController extends Controller
     {
         $abonnes = Abonne::all();
         return response()->json($abonnes,201);
+
     }
+
     public function getAbonneByPaiementType(String $tp)
     {
         $abonnes = Abonne::where('type_paiement',$tp);
         return response()->json($abonnes,201);
     }
-    public function getAbonneBySexe(String $sx)
 
+    public function getAbonneBySexe(String $sx)
     {
         $abonnes = Abonne::where('sexe',$sx);
         return response()->json($abonnes,201);
     }
+
     /**
      * Store a newly created resource in storage.
      *
@@ -37,17 +41,21 @@ class AbonneController extends Controller
      */
     public function store(Request $request)
     {
-      $request->validate([
-        'nom'=> 'required',
-        'prenom'=> 'required',
-        'email'=> 'required',
-        'password'=> 'required',
-        'sexe'=>'request',
-        'photo_path'=>'required|image',
-      ]);
-     $image = $request->file('photo_path')
-     ->store('storage/photo-abonnes','public');
-      $path = 'storage/photo-abonnes'.$image;
+
+        $request->validate([
+            'nom'=> 'required',
+            'prenom'=> 'required',
+            'email'=> 'required|unique:abonnes',
+            'password'=> 'required',
+            'sexe'=>'request',
+            'photo_path'=>'required|image',
+            'telephone' => 'required|unique:abonnes'
+        ]);
+
+        $image = $request->file('photo_path')
+        ->store('storage/photo-abonnes','public');
+
+        $path = 'storage/photo-abonnes'.$image;//image path
 
         $abonne= Abonne:: create([
             'nom'=>$request->input('nom'),
@@ -59,9 +67,12 @@ class AbonneController extends Controller
             'ville'=>$request->input('ville'),
             'code_postal'=>$request->input('code_postal'),
             'photo_path'=>$path,
-            'type_paiement'=>$request->input('type_paiement')
+            'type_paiement'=>$request->input('type_paiement'),
+            'telephone' => $request->input('telephone'),
         ]);
+
         return response()->json($abonne, 201);
+
     }
 
     /**
@@ -70,12 +81,12 @@ class AbonneController extends Controller
      * @param  \App\Models\Abonne  $abonne
      * @return \Illuminate\Http\Response
      */
-    public function show(Abonne $abonne)
+    public function show($id)
     {
-        $abn=Abonne::find($abonne->id())->firstOrFail();
+        $abn=Abonne::find($id)->firstOrFail();
         $msg = "Aucun abonne de ce type pour le momnent";
 
-       if ($abn) {
+       if (!is_null($abn)) {
            return response()->json($abn,201);
        }
        return response()->json($msg,404);
@@ -102,7 +113,7 @@ class AbonneController extends Controller
 
         //rechercher si l'abonnne existe dans la base de donnees
         $abn = Abonne::find($abonne->id())->firstOrFail();
-        if ($abn) {
+        if (!is_null($abn)) {
             $abonne->nom = $request->input('nom');
             $abonne->prenom = $request->input('prenom');
             $abonne->email = $request->input('email');

@@ -15,6 +15,9 @@ class CreateRecettesTable extends Migration
     {
         Schema::create('recettes', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('users_id') //or users_type
+            ->constrained()
+            ->onDelete('cascade');
             $table->string('nom');
             $table->string('description');
             $table->boolean('publie')->default(0);

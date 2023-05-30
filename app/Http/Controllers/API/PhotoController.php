@@ -78,7 +78,6 @@ class PhotoController extends Controller
             $image=$request->file("image")
             ->store('storage/photo-recette','public');
              $path ='storage/photo-recette/'.$image;
-
              $request->validate([
                 'photo_path'=>'required|image'
             ]);

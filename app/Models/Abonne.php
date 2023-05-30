@@ -15,7 +15,8 @@ class Abonne extends Model
             'region',
             'ville',
             'photo_path',
-            'type_paiement'
+            'type_paiement',
+            'telephone',
     ];
     use HasFactory;
 }
