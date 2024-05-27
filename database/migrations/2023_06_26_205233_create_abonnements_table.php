@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateEtappesTable extends Migration
+class CreateAbonnementsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,14 @@ class CreateEtappesTable extends Migration
      */
     public function up()
     {
-        Schema::create('etappes', function (Blueprint $table) {
+        Schema::create('abonnements', function (Blueprint $table) {
             $table->id();
-            $table->time('duree');
-            $table->text('explication');
-            $table->string('image');
-            $table->foreignId('recettes_id')
+            $table->double('montant');
+            $table->foreignId('abonnes_id')
             ->constrained()
-            ->onDelete('cascade');
+            ->onDelete('cascade')
+            ->onUpdate('cascasde');
+            $table->string('status');
             $table->timestamps();
         });
     }
@@ -32,6 +32,6 @@ class CreateEtappesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('etappes');
+        Schema::dropIfExists('abonnements');
     }
 }

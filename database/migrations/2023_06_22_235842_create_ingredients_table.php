@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateEtappesTable extends Migration
+class CreateIngredientsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,12 @@ class CreateEtappesTable extends Migration
      */
     public function up()
     {
-        Schema::create('etappes', function (Blueprint $table) {
+        Schema::create('ingredients', function (Blueprint $table) {
             $table->id();
-            $table->time('duree');
-            $table->text('explication');
+            $table->string('nom');
+            $table->text('description');
             $table->string('image');
-            $table->foreignId('recettes_id')
-            ->constrained()
+            $table->foreignId('recettes_id')->constrained()
             ->onDelete('cascade');
             $table->timestamps();
         });
@@ -32,6 +31,6 @@ class CreateEtappesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('etappes');
+        Schema::dropIfExists('ingredients');
     }
 }

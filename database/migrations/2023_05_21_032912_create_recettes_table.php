@@ -20,9 +20,10 @@ class CreateRecettesTable extends Migration
             ->onDelete('cascade');
             $table->string('nom');
             $table->string('description');
-            $table->boolean('publie')->default(0);
-            $table->string('lien')->unique();
-            $table->foreignId('categories_id')->constrained()
+            $table->Integer('budget');
+            $table->time('duree');
+            $table->smallInteger('publie')->default(0);
+            $table->foreignId('mets_id')->constrained()
             ->onDelete('cascade');
             $table->smallInteger('vote')->default(0);//le nombre de personne qui aiment la recette pour pouvoir distinguer les mieux votées aux moins votées
             $table->timestamps();

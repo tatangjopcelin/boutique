@@ -5,17 +5,36 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Photo;
 use Illuminate\Http\Request;
+use App\Http\Resouces\Photo as PhotoResource;
 
 class PhotoController extends Controller
 {
+    private $photo;
+
+    public function __construct($photo)
+    {
+        $this->photo;
+    }
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function photoRecette($idRecette)
     {
-        //
+        $photo = Video::where('recettes_id',$idRecette)
+
+        ->firstOrFail();
+        
+        if (!iss_null($video)) {
+
+           return response()->json(
+
+            new PhotoResource($video),
+
+            200
+           );
+        }
     }
 
     /**
@@ -32,15 +51,20 @@ class PhotoController extends Controller
         $recette= Recette::find($id_recette)
         ->firstOrFail();
         if ($recette) {
+
             $image=$request->file("image")
             ->store('storage/photo-recette','public');
             $path ='storage/photo-recette/'.$image;
+
             $recette=Recette::create([
                 'photo_path'=>$path,
                 'recette_id'=>$id_recette,
             ]);
+
             return response()->json($recette, 201);
+
         }else{
+
             $error = "Aucune recette correspondant";
             return response()->json($error,404);
         }

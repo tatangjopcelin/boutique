@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API;
 
-use App\Models\API\Video;
+use App\Http\Controllers\Controller;
+use App\Models\NewsLetter;
 use Illuminate\Http\Request;
 
-class VideoController extends Controller
+class NewsLetterController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,17 +15,7 @@ class VideoController extends Controller
      */
     public function index()
     {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+        
     }
 
     /**
@@ -35,39 +26,34 @@ class VideoController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([$request->email => 'require|unique:newsletters']);
+        
+        NewsLetter::create([
+                 'email' => $request->email,
+        ]);
+
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\API\Video  $video
+     * @param  \App\Models\NewsLetter  $newsLetter
      * @return \Illuminate\Http\Response
      */
-    public function show(Video $video)
+    public function show(NewsLetter $newsLetter)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\API\Video  $video
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Video $video)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\API\Video  $video
+     * @param  \App\Models\NewsLetter  $newsLetter
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Video $video)
+    public function update(Request $request, NewsLetter $newsLetter)
     {
         //
     }
@@ -75,10 +61,10 @@ class VideoController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\API\Video  $video
+     * @param  \App\Models\NewsLetter  $newsLetter
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Video $video)
+    public function destroy(NewsLetter $newsLetter)
     {
         //
     }

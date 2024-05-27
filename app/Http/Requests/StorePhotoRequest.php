@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreVideoRequest extends FormRequest
+class StorePhotoRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,8 +24,7 @@ class StoreVideoRequest extends FormRequest
     public function rules()
     {
         return [
-            
-            'video' => 'required|file|mimetypes:video/mp4,video/mpeg,video/x-matroska',
+            'image' => 'required|file|mimetypes:video/jpeg,video/jpg,video/png',
         ];
     }
 }

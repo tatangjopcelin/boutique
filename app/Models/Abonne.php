@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Abonnement;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Abonne extends Model
 {
@@ -11,12 +12,13 @@ class Abonne extends Model
             'nom',
             'prenom',
             'email',
-            'password',
-            'region',
-            'ville',
-            'photo_path',
-            'type_paiement',
-            'telephone',
+            'tel',
+            'users_id',
+            'pays',
     ];
     use HasFactory;
+    public function abonnement()
+    {
+        return $this->hasOne(Abonnement::class);
+    }
 }

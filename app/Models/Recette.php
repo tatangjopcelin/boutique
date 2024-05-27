@@ -2,15 +2,24 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Met;
+use App\Models\User;
+use App\Models\Photo;
+use App\Models\Video;
+use App\Models\Etappe;
+use App\Models\Categorie;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Recette extends Model
 {
     protected $fillable = [
             'nom',
             'description',
-            'users_admin',
+            'users_id',
+            'mets_id',
+            'budget',
+            'duree',
     ];
 
     use HasFactory;
@@ -30,5 +39,13 @@ class Recette extends Model
     public function etappes()
     {
         return $this->hasMany(Etappe::class);
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+    public function met()
+    {
+        return $this->belongsTo(Met::class);
     }
 }

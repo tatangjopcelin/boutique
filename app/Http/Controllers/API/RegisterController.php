@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\API\BaseController;
 
 
@@ -26,11 +29,11 @@ class RegisterController extends BaseController
  
          $validator = Validator::make($request->all(), [
  
-             'name' => ['required', 'string', 'max:255'],
+             'name' => ['required', 'string','min:3','max:100'],
  
              'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
  
-             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+             'password' => ['required','min:4'],
  
              'c_password' => 'required|same:password',
  
@@ -40,7 +43,7 @@ class RegisterController extends BaseController
  
          if($validator->fails()){
  
-             return $this->sendError('Validation Error.', $validator->errors());       
+             return response()->json($validator->errors(),401);       
  
          }
  
@@ -48,17 +51,21 @@ class RegisterController extends BaseController
  
          $input = $request->all();
  
-         $input['password'] = Hash::make($input['password']);
+         $input['password'] = bcrypt($input['password']);
  
          $user = User::create($input);
  
-         $success['token'] =  $user->createToken('recette_token')->plainTextToken;
+         $token =  $user->createToken('recette_token')->accessToken;
  
-         $success['name'] =  $user->name;
- 
-    
- 
-         return $this->sendResponse($success, 'User register successfully.');
+         return response()->json([
+
+            'message' =>'Vous ete inscript',
+            'token'   =>$token,
+            'status'  =>201
+
+        ],201);
+        
+        $this->login($request);
  
      }
  
@@ -78,25 +85,51 @@ class RegisterController extends BaseController
  
      {
  
-         if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){ 
+         if(auth()->attempt(['email' => $request->email, 'password' => $request->password])){ 
  
-             $user = Auth::user(); 
+             $this->user = auth()->user(); 
  
-             $success['token'] =  $user->createToken('recette_token')->plainTextToken; 
+             $token =  $this->user->createToken('recette_token')->accessToken;
  
-             $success['name'] =  $user->name;
  
-    
- 
-             return $this->sendResponse($success, 'User login successfully.');
+             return response()->json([
+                'message' =>'Vous ete connecté',
+                'user'    =>$this->user,
+                'token'   =>$token,
+                'status'  =>201
+            ],201);
  
          } 
  
          else{ 
  
-             return $this->sendError('Unauthorised.', ['error'=>'Unauthorised']);
+             return response()->json('  Non autorisé ',401);
  
          } 
  
      }
+
+     public function userInfo(Request $request)
+     {
+
+       $user = User::where('email',$request->email)->firstOrFail();
+       if(is_null($user)){
+        return response()->json('Utilisateur nom reconnu', 201);
+       }
+       return response()->json(['utilisateur' => 
+       new UserResource($user)], 201);
+  
+     }
+
+     public function logout (Request $request) {
+
+        $token = $request->user()->token();
+
+        $token->revoke();
+
+        $response = ['message' => 'You have been successfully logged out!'];
+
+        return response($response, 200);
+    }
+     private $user;
 }

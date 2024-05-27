@@ -15,14 +15,10 @@ class CreateVideosTable extends Migration
     {
         Schema::create('videos', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('title');
-            $table->string('original_name');
-            $table->string('disk');
             $table->string('path');
             $table->foreignId('recettes_id')
             ->constrained()
             ->onDelete('cascade');
-            $table->datetime('converted_for_downloading_at')->nullable();
             $table->datetime('converted_for_streaming_at')->nullable();
             $table->timestamps();
         });

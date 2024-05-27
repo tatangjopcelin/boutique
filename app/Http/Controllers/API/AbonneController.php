@@ -2,9 +2,15 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Models\User;
 use App\Models\Abonne;
-use Illuminate\Http\Request;
 
+use App\Mail\WelcomeMail;
+use App\Models\Abonnement;
+use Illuminate\Http\Request;
+use App\Mail\AccountBloquedMail;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\API\BaseController;
 
 class AbonneController extends BaseController
@@ -16,21 +22,13 @@ class AbonneController extends BaseController
      */
     public function index()
     {
-        $abonnes = Abonne::all();
-        return response()->json($abonnes,201);
-
-    }
-
-    public function getAbonneByPaiementType(String $tp)
-    {
-        $abonnes = Abonne::where('type_paiement',$tp);
-        return response()->json($abonnes,201);
-    }
-
-    public function getAbonneBySexe(String $sx)
-    {
-        $abonnes = Abonne::where('sexe',$sx);
-        return response()->json($abonnes,201);
+        $an = Abonnement::where('status','Bloqué')->get();
+        $abonnes = Abonnement::where('status','Bloqué')->get()->abonne();
+        if (!is_null($abonnes)) {
+          
+            return response()->json(['abonnes' => $abonnes],201);
+        }
+        return response()->json('Aucun abonné pour le moment',201);
     }
 
     /**
@@ -42,36 +40,133 @@ class AbonneController extends BaseController
     public function store(Request $request)
     {
 
-        $request->validate([
+        $v = Validator::make($request->all(),[
             'nom'=> 'required',
-            'prenom'=> 'required',
-            'email'=> 'required|unique:abonnes',
+            'prenom' => 'required',
+            'email' => 'nullable|unique:users',
+            'tel' => 'required|unique:abonnes',
             'password'=> 'required',
-            'sexe'=>'request',
-            'photo_path'=>'required|image',
-            'telephone' => 'required|unique:abonnes'
+            'somme' => 'required',
+            'pays' => 'required|min:5|max:7',
+        ]);
+        if ($v->fails()) {
+           return response()
+           ->json(['erros' => $v->errors()],401);
+        }
+        if(is_null($request->tel) && is_null($request->email)){
+            return response()
+           ->json(['erros' => 'Veuillez remplir le champs Tel ou email'],401);
+        }
+        
+        if((!is_null($request->tel) && !is_null($request->tel))
+           || (!is_null($request->tel) && is_null($request->tel))
+        ){
+
+            $alea = rand(1000,9000);
+
+            $email_def = 'RC-M'.$alea;
+
+            $va = Validator::make([$email_def],[
+      
+                'email' => 'required|unique:users',
+      
+            ]);
+            if ($va->fails()) {
+                $alea = rand(9000,20000);
+                $email_def = 'RC-M'.$alea;
+            }
+
+
+            
+            
+            
+            
+            $email = !is_null($request->email) ? $request->email : $email_def;
+            
+            // $basic  = new \Vonage\Client\Credentials\Basic(VONAGE_API_KEY, VONAGE_API_SECRET);
+            // $client = new \Vonage\Client($basic);
+
+            // $response = $client->sms()->send(
+            //     new \Vonage\SMS\Message\SMS(TO_NUMBER, BRAND_NAME, 'A text message sent using the Nexmo SMS API')
+            // );
+            
+            // $message = $response->current();
+            
+            // if ($message->getStatus() == 0) {
+            //     echo "The message was sent successfully\n";
+            // } else {
+            //     echo "The message failed with status: " . $message->getStatus() . "\n";
+            // }
+            // $basic  = new \Nexmo\Client\Credentials\Basic('key', 'secret');
+
+            // $client = new \Nexmo\Client($basic);
+    
+            // $message = $client->message()->send([
+            //     'to' => $request->tel,
+            //     'from' => 'Projet',
+            //     'text' => 'Votre Login de connexion est '.$email,
+            // ]);
+            
+        }
+        
+        $nc = $request->nom.' '.$request->prenom;
+       
+        // a chaque abonnement il y a creation d'un utilisateur
+        $u = User::create([
+
+            'name' => $nc,
+
+            'email' => $email,
+
+            'password' => bcrypt($request->password)
+
         ]);
 
-        $image = $request->file('photo_path')
-        ->store('storage/photo-abonnes','public');
+        if(!is_null($request->email)){
+            
+            Mail::to($u->email)
+      
+            ->send(new WelcomeMail($u));
+        }
+        $email_2 = !is_null($request->email) ? $request->email : 'Pas d\'adresse électronique';
+      
+        // if ($request->hasFile()) {
+            
+        //     $url = 'http://wwww.projet.univ/';
 
-        $path = 'storage/photo-abonnes'.$image;//image path
+        //     $image = $request->file('photo_path')
+        //     ->store('photo-abonnes','public');
+    
+        //     $path = $url.'storage/photo-abonnes'.$image;//
+
+        // }else{
+        //     $path = $url.'storage/photo-abonnes/avatar.png';
+        // }
 
         $abonne= Abonne:: create([
-            'nom'=>$request->input('nom'),
-            'prenom'=>$request->input('prenom'),
-            'email'=>$request->input('email'),
-            'password'=>$request->input('password'),
-            'sexe'=>$request->input('sexe'),
-            'region'=>$request->input('region'),
-            'ville'=>$request->input('ville'),
-            'code_postal'=>$request->input('code_postal'),
-            'photo_path'=>$path,
-            'type_paiement'=>$request->input('type_paiement'),
-            'telephone' => $request->input('telephone'),
+            'nom'=> $request->input('nom'),
+            'prenom'=> $request->input('prenom'),
+            'email'=> $email_2,
+            'tel' => $request->tel,
+            'users_id' => $u->id,
+            'pays' => $request->pays,
         ]);
 
-        return response()->json($abonne, 201);
+        //abonnement
+        Abonnement::create([
+
+            'montant' => $request->somme,
+
+            'abonnes_id' => $abonne->id,
+
+            'status' => 'Activé',
+        ]);
+
+        return response()->json([
+            'abonnee' => $abonne,
+            'Login'  =>$email,
+            'msg'  => 'Abonnement reussi',
+        ], 201);
 
     }
 
@@ -101,31 +196,7 @@ class AbonneController extends BaseController
      */
     public function update(Request $request, Abonne $abonne)
     {
-        $request->validate([
-            'nom'=> 'required',
-            'prenom'=> 'required',
-            'email'=> 'required',
-            'password'=> 'required'
-          ]);
-          $image = $request->file('photo_path')
-          ->store('storage/photo-abonnes','public');
-           $path = 'storage/photo-abonnes'.$image;
-
-        //rechercher si l'abonnne existe dans la base de donnees
-        $abn = Abonne::find($abonne->id())->firstOrFail();
-        if (!is_null($abn)) {
-            $abonne->nom = $request->input('nom');
-            $abonne->prenom = $request->input('prenom');
-            $abonne->email = $request->input('email');
-            $abonne->password = $request->input('password');
-            $aboone->region = $request->input('region');
-            $abonne->ville = $request->input('ville');
-            $abonne->code_postal = $request->input('code_postal');
-            $abonne->type_paiement = $request->input('type_paiement');
-            $abonne->sexe = $request->input('sexe');
-            $abonne->photo_path = $path;
-            $abonne->update();
-        }
+       
 
     }
 
@@ -138,6 +209,39 @@ class AbonneController extends BaseController
     public function destroy(Abonne $abonne)
     {
         $abonne->delete();
-        return response()->json("Abonne suprime avec succes",201);
+        return response()->json(["msg" => "Abonne suprime avec succes"],201);
+    }
+    public function bloquer($id)
+    {
+        $u = Abonne::find($id);
+
+        if (is_null($u)) {
+           return response()
+           ->json([
+            'message' => 'Cette abonné n\'existe pas',
+           ],400);
+        }
+
+        $abn = Abonnement::find($u->id);
+        $msg = '';
+        if ($abn->status == 'Bloqué') {
+            $abn->status = 'Activé';
+            $msg .='Cet abonné a été débloqué';
+        }else{
+            $abn->status = 'Bloqué';
+            $msg ='Cet abonné a été bloqué';
+        }
+        $abn->update();
+
+
+        // Mail::to($u->email)
+      
+        // ->send(new AccountBloquedMail($u));
+
+        return response()
+        ->json([
+            'message' => $msg,
+        ],
+        200);
     }
 }
